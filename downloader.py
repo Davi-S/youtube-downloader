@@ -1,55 +1,98 @@
 import pytube
-import argparse
+import io
+import moviepy.editor
+import threading
+
 
 class YoutubeDowloader:
-    def __init__(self, args: argparse.Namespace) -> None:
+    def __init__(self, url, mode, quality, name, extention, destination) -> None:
         print('Starting downloader')
-        self.args: argparse.Namespace = args
+        self.url = url
+        self.mode = mode
+        self.quality = quality
+        self.name = name
+        self.extention = extention
+        self.destination = destination
+        
         self.yt: list[pytube.YouTube] = self._create_video_obj()
-        self.streams: list[pytube.Stream] = self._get_stream()
+
 
     def _create_video_obj(self) -> list[pytube.YouTube]:
-        if "watch?v=" in self.args.url:
-            return [pytube.YouTube(self.args.url)]  # Return as a list
+        """Return a list containing one or more pytube.YouTube elemenst
 
-        elif "playlist?list=" in self.args.url:
-            return list(pytube.Playlist(self.args.url).videos)
+        Returns:
+            list[pytube.YouTube]: list of pytube.YouTube objects
+        """
+        if "watch?v=" in self.url:
+            return [pytube.YouTube(self.url)]  # Return as a list
 
-    def _get_stream(self):  # todo: download audio and video to merge them in high quality moviepy
-        strm = []
-        for count, video in enumerate(self.yt, start=1):
-            print(f'Colecting video {count}/{len(self.yt)}')
-            stream = video.streams
-            stream = stream.filter(only_audio=self.args.mode == 'mp3',
-                                   progressive=self.args.mode == 'mp4')
-            stream = stream.order_by('abr' if self.args.mode == 'mp3' else 'resolution')
-            
-            if self.args.quality == 'medium':
-                stream = stream[len(stream)//2]
-            else:
-                stream = stream.last() if self.args.quality == 'high' else stream.first()
-                
-            print(f'Video colected {count}/{len(self.yt)}')
-            
-            if self.args.fast_dowload:  # download the stream just after colection
-                print(f'Starting download {count}/{len(self.yt)}')
-                self._dowload_single(stream)
-                print(f'Download complete {count}/{len(self.yt)}')
-            
-            else:  # save stream
-                strm.append(stream)
-                
-        return strm
-    
-    def _dowload_single(self, stream:pytube.Stream):
-        stream.download(filename=f"{self.args.name if self.args.name is not None else stream.title}.{self.args.mode}",
-                        output_path=self.args.destination)
+        elif "playlist?list=" in self.url:
+            return list(pytube.Playlist(self.url).videos)
 
-    def download(self):
-        # if 'self.args.fast_dowload' is true 'self.streams' will be empty and nothing will happend here      
-        for count, stream in enumerate(self.streams, start=1):
-            print(f'Starting download {count}/{len(self.streams)}')
-            self._dowload_single(stream)
-            print(f'Download complete {count}/{len(self.streams)}')
+
+    def get_av_stream(self, yt: pytube.YouTube) -> tuple[pytube.Stream, pytube.Stream]:
+        """Get the audio and video stream matching the class atributes
+
+        Args:
+            yt (pytube.YouTube): The youtube object
+
+        Returns:
+            tuple[pytube.Stream, pytube.Stream]: Audio and video streams respectively
+        """
+        # get streams
+        stream = yt.streams
+
+        # get the rigth steam for the the rigth mode:
+        stream_audio = stream.filter(only_audio=True) if self.mode == 'audio' else pytube.StreamQuery([])  # empty stream query
+        stream_video = stream.filter(only_video=True) if self.mode == 'video' else pytube.StreamQuery([])
+
+        # sort the streams
+        stream_audio = stream_audio.order_by('abr')
+        stream_video = stream_video.order_by('resolution')
+
+        # get the stream acordiong to the determined quality
+        stream_audio = stream_audio.last() if self.quality == 'high' else (None if IndexError else stream_audio[len(stream_audio) // 2]) if self.quality == 'medium' else stream_audio.first()
+        stream_video = stream_video.last() if self.quality == 'high' else (None if IndexError else stream_video[len(stream_video) // 2]) if self.quality == 'medium' else stream_video.first()
         
-        return
+        return stream_audio, stream_video
+        
+    def merge_streams(self, stream_audio: pytube.Stream, stream_video: pytube.Stream) -> moviepy.editor.VideoFileClip:
+        """Merge togheter audio and video streams into a moviepy.editor.VideoFileClip object 
+
+        Args:
+            stream_audio (pytube.Stream): Audio stream
+            stream_video (pytube.Stream): Video steam
+
+        Returns:
+            moviepy.editor.VideoFileClip: Video with audio
+        """
+        # Create a BytesIO object from the audio stream data
+        audio_data = io.BytesIO()
+        stream_audio.download(audio_data)
+        audio_data.seek(0)
+        
+        # Create a BytesIO object from the video stream data
+        video_data = io.BytesIO()
+        stream_video.download(video_data)
+        video_data.seek(0)
+
+        # Create an audio clip object
+        audio = moviepy.editor.AudioFileClip(audio_data)
+        
+        # Create a video clip object
+        video = moviepy.editor.VideoFileClip(video_data)
+
+        # Set the audio of the video clip
+        video.audio = audio
+
+        # Return the video with the audio
+        return video
+    
+    def download_file(self, video_file: moviepy.editor.VideoFileClip):
+        video_file.write_videofile(filename=f'{self.destination}/{self.name}.{self.extention}')
+    
+    def dowload_stream(self, stream: pytube.Stream):
+        stream.download(output_path=self.destination, filename=f"{self.name}.{self.extention}")
+
+    def start(self):
+        pass # todo

@@ -4,12 +4,17 @@ import os
 import re
 from downloader import YoutubeDowloader
 
-def get_dowloads_path():
+
+def validate_destination_path(path: str) -> str:
+    return path.rstrip("/\\")
+
+
+def dowloads_path():
         folder = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Downloads')
         return folder if os.path.exists(folder) else None
     
     
-def valid_youtube_url(url: str) -> bool:
+def validate_youtube_url(url: str) -> bool:
     video_pattern = r"^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/watch\?v=[a-zA-Z0-9\-_]+$"
     playlist_pattern = r"^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/playlist\?list=[a-zA-Z0-9\-_]+$"
     match_video = re.match(video_pattern, url)
@@ -20,7 +25,8 @@ def valid_youtube_url(url: str) -> bool:
 
 
 def main(args: argparse.Namespace):
-    YoutubeDowloader(args).download()
+    YoutubeDowloader(**vars(args)).get_video_stream()
+    # YoutubeDowloader(vars(args)).download()
     print('Done!')
 
 
@@ -28,12 +34,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      description='Youtube video dowloader')
 
-    parser.add_argument('url', type=valid_youtube_url, help='The url of the video, shorts, or playlist')
-    parser.add_argument('-m', '--mode', type=str, help='"mp3" just audio; or "mp4" audio and video', metavar='', choices=['mp3', 'mp4'], default='mp4')
+    parser.add_argument('url', type=validate_youtube_url, help='The url of the video, shorts, or playlist')
+    parser.add_argument('-m', '--mode', type=str, help='Just audio; just video; or audio and video', metavar='', choices=['audio', 'video', 'av'], default='av')
     parser.add_argument('-q', '--quality', type=str, help='Preferred quality of the dowload', metavar='', choices=['high', 'medium', 'low'], default='high')
-    parser.add_argument('-d', '--destination', type=str, help='Where to dowload the file', metavar='', default=get_dowloads_path() or os.getcwd())
     parser.add_argument('-n', '--name', type=str, help='The name that the file will be saved', metavar='')
-    parser.add_argument('-f', '--fast_dowload', action='store_true', help='Dowload the video rigth after collecting it')
+    parser.add_argument('-e', '--extention', type=str, help='The file extention, like "mp3" or "mp4"', metavar='')
+    parser.add_argument('-d', '--destination', type=validate_destination_path, help='Path to here to dowload the file', metavar='', default=dowloads_path() or os.getcwd())
     
     args = parser.parse_args()
     main(args)
