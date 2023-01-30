@@ -83,9 +83,9 @@ if __name__ == '__main__':
                                      description='Youtube video dowloader')
 
     parser.add_argument('url', type=validate_youtube_url, help='The url of the video, shorts, or playlist')
-    parser.add_argument('-m', '--mode', type=str, help='Just audio; just video; or audio and video', metavar='', choices=['audio', 'video', 'av'], default='av')
-    parser.add_argument('-q', '--quality', type=str, help='Preferred quality of the dowload', metavar='', choices=['high', 'medium', 'low'], default='medium')
-    parser.add_argument('-d', '--destination', type=format_destination_path, help='Path to here to dowload the file', metavar='', default=dowloads_path() or os.getcwd())
+    parser.add_argument('-m', '--mode', type=str, help='Just audio, just video, or audio and video', choices=['audio', 'video', 'av'], default='av')
+    parser.add_argument('-q', '--quality', type=str, help='Preferred quality of the dowload. High quality may result in long download time', choices=['high', 'medium', 'low'], default='medium')
+    parser.add_argument('-d', '--destination', type=format_destination_path, help='Path to here to dowload the file', default=dowloads_path() or os.getcwd())
     parser.add_argument('-t', '--thread', action='store_true', help='Use multithread to process playlists')
     
     args = parser.parse_args()
