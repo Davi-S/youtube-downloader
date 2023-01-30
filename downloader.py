@@ -1,6 +1,5 @@
-import pytube
-import io
 import moviepy.editor
+import pytube
 
 
 def filter_stream_query(stream_query: pytube.StreamQuery, stream_type: str, quality: str) -> pytube.Stream:
@@ -46,7 +45,7 @@ def merge_streams(stream_audio: pytube.Stream, stream_video: pytube.Stream) -> m
 
 
 def _download_file(file: moviepy.editor.VideoFileClip, destination: str, name: str, extention: str='mp4') -> None:
-    file.write_videofile(filename=f'{destination}/{name}.{extention}', logger=None)
+    file.write_videofile(filename=f'{destination}/{name}.{extention}', threads=15, logger=None)
 
 
 def _dowload_stream(stream: pytube.Stream, destination: str, name: str, extention: str) -> None:
