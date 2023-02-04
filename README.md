@@ -27,9 +27,24 @@ optional arguments:
 
 ## Installation
 
+### To install
+
+On the directory path in the cmd run
+
 ```
-pip install moviepy pytube
+pip install .
 ```
+### To run
+
+on any path in the cmd run 
+```
+ytd
+```
+or for more information on the commad line arguments run
+```
+ytd --help
+```
+
 
 
 ## Contribute
