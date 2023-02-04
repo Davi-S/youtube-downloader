@@ -1,0 +1,8 @@
+README.md
+main.py
+setup.py
+youtube_downloader.egg-info/PKG-INFO
+youtube_downloader.egg-info/SOURCES.txt
+youtube_downloader.egg-info/dependency_links.txt
+youtube_downloader.egg-info/entry_points.txt
+youtube_downloader.egg-info/top_level.txt

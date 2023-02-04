@@ -134,7 +134,7 @@ def main(args: argparse.Namespace) -> int:
     return 0
 
 
-def pre_main():  # used for command line run from pip
+def pre_main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      description='Youtube video dowloader')
 
